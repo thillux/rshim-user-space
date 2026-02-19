@@ -391,7 +391,7 @@ static void rshim_fuse_console_ioctl(fuse_req_t req, int cmd, void *arg,
   switch (cmd) {
   case TCGETS:
     if (!out_bufsz) {
-      struct iovec iov = { arg, sizeof(bd->cons_termios) };
+      struct iovec iov = { NULL, sizeof(bd->cons_termios) };
 
       fuse_reply_ioctl_retry(req, NULL, 0, &iov, 1);
     } else {
@@ -403,7 +403,7 @@ static void rshim_fuse_console_ioctl(fuse_req_t req, int cmd, void *arg,
   case TCSETSW:
   case TCSETSF:
     if (!in_bufsz) {
-      struct iovec iov = {arg, sizeof(bd->cons_termios)};
+      struct iovec iov = {NULL, sizeof(bd->cons_termios)};
 
       fuse_reply_ioctl_retry(req, &iov, 1, NULL, 0);
     } else {
