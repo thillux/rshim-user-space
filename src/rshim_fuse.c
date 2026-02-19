@@ -28,25 +28,7 @@
 #endif
 #include <features.h>
 #include <unistd.h>
-/*
- * glibc 2.42+ no longer pulls in struct termio; provide a minimal definition so
- * we can keep using the legacy layout expected by existing userspace tools.
- */
-#if !__GLIBC_PREREQ(2, 42)   // if glibc is before 2.42
-#include <termio.h>
-#else
-#ifndef NCC
-#define NCC 8
-#endif
-struct termio {
-  unsigned short c_iflag;
-  unsigned short c_oflag;
-  unsigned short c_cflag;
-  unsigned short c_lflag;
-  unsigned char c_line;
-  unsigned char c_cc[NCC];
-};
-#endif
+#include <termios.h>
 #elif defined(__FreeBSD__)
 #include <termios.h>
 #include <sys/stat.h>
@@ -409,11 +391,11 @@ static void rshim_fuse_console_ioctl(fuse_req_t req, int cmd, void *arg,
   switch (cmd) {
   case TCGETS:
     if (!out_bufsz) {
-      struct iovec iov = { arg, sizeof(struct termio) };
+      struct iovec iov = { arg, sizeof(bd->cons_termios) };
 
       fuse_reply_ioctl_retry(req, NULL, 0, &iov, 1);
     } else {
-      fuse_reply_ioctl(req, 0, &bd->cons_termios, sizeof(struct termio));
+      fuse_reply_ioctl(req, 0, &bd->cons_termios, sizeof(bd->cons_termios));
     }
     break;
 
