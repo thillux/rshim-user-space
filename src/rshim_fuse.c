@@ -26,9 +26,9 @@
 #include <fuse/cuse_lowlevel.h>
 #include <fuse/fuse_opt.h>
 #endif
+#include <asm/termbits.h>
 #include <features.h>
 #include <unistd.h>
-#include <termios.h>
 #elif defined(__FreeBSD__)
 #include <termios.h>
 #include <sys/stat.h>
@@ -389,7 +389,7 @@ static void rshim_fuse_console_ioctl(fuse_req_t req, int cmd, void *arg,
   pthread_mutex_lock(&bd->mutex);
 
   switch (cmd) {
-  case TCGETS:
+  case TCGETS2:
     if (!out_bufsz) {
       struct iovec iov = { NULL, sizeof(bd->cons_termios) };
 
@@ -399,9 +399,9 @@ static void rshim_fuse_console_ioctl(fuse_req_t req, int cmd, void *arg,
     }
     break;
 
-  case TCSETS:
-  case TCSETSW:
-  case TCSETSF:
+  case TCSETS2:
+  case TCSETSW2:
+  case TCSETSF2:
     if (!in_bufsz) {
       struct iovec iov = {NULL, sizeof(bd->cons_termios)};
 
