@@ -380,6 +380,13 @@ static void rshim_fuse_console_ioctl(fuse_req_t req, int cmd, void *arg,
                                      size_t in_bufsz, size_t out_bufsz)
 {
   rshim_backend_t *bd = fuse_req_userdata(req);
+  /* dummy data, needed for stty to work */
+  static const struct winsize ws = {
+        .ws_row = 24,
+        .ws_col = 80,
+        .ws_xpixel = 0,
+        .ws_ypixel = 0,
+  };
 
   if (!bd) {
     fuse_reply_err(req, ENODEV);
@@ -391,7 +398,7 @@ static void rshim_fuse_console_ioctl(fuse_req_t req, int cmd, void *arg,
   switch (cmd) {
   case TCGETS2:
     if (!out_bufsz) {
-      struct iovec iov = { &bd->cons_termios, sizeof(bd->cons_termios) };
+      struct iovec iov = { arg, sizeof(bd->cons_termios) };
 
       fuse_reply_ioctl_retry(req, NULL, 0, &iov, 1);
     } else {
@@ -403,12 +410,21 @@ static void rshim_fuse_console_ioctl(fuse_req_t req, int cmd, void *arg,
   case TCSETSW2:
   case TCSETSF2:
     if (!in_bufsz) {
-      struct iovec iov = {&bd->cons_termios, sizeof(bd->cons_termios)};
+      struct iovec iov = { arg, sizeof(bd->cons_termios)};
 
       fuse_reply_ioctl_retry(req, &iov, 1, NULL, 0);
     } else {
       memcpy(&bd->cons_termios, in_buf, sizeof(bd->cons_termios));
       fuse_reply_ioctl(req, 0, NULL, 0);
+    }
+    break;
+
+  case TIOCGWINSZ:
+    if (out_bufsz == 0) {
+        struct iovec iov = { arg, sizeof(struct winsize) };
+        fuse_reply_ioctl_retry(req, NULL, 0, &iov, 1);
+    } else {
+        fuse_reply_ioctl(req, 0, &ws, sizeof(ws));
     }
     break;
 
